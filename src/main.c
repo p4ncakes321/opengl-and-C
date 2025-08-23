@@ -30,7 +30,7 @@ int main(){
     unsigned int indices[] = {0, 1, 3, 1, 2, 3};
     
     Mesh* quad = MeshCreate(vertices, 4, indices, 6);
-    Texture* texture = TextureCreate("assets/test.jpg", true, true); 
+    Texture* texture = TextureCreate("assets/dumb.png", true, true); 
     GLuint shader = ShaderCreate("shaders/default.vert", "shaders/default.frag");
 
     WindowSetKeyCallback(window, window_key_callback);
