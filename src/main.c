@@ -18,7 +18,7 @@ void window_key_callback(Window* window, int key, int scancode, int action, int 
 
 int main(){
     EngineInit();
-    Window* win1 = WindowCreate(screen_width, screen_height, "Window1", NULL);
+    Window* window = WindowCreate(screen_width, screen_height, "Window1", NULL);
 
     // position, color, normal, uv, uv2
     Vertex vertices[] = {
@@ -33,13 +33,13 @@ int main(){
     Texture* texture = TextureCreate("assets/test.jpg", true, true); 
     GLuint shader = ShaderCreate("shaders/default.vert", "shaders/default.frag");
 
-    WindowSetKeyCallback(win1, window_key_callback);
+    WindowSetKeyCallback(window, window_key_callback);
 
-    WindowVsync(win1, false);
+    WindowVsync(window, false);
 
     unsigned int fps = 0;
     double lastCheckedFpsTime = glfwGetTime();
-    while(!WindowShouldClose(win1)){
+    while(!WindowShouldClose(window)){
         double currentTime = glfwGetTime();
         if (currentTime - lastCheckedFpsTime >= 1) {
             printf("Fps: %d\n", fps);
@@ -47,14 +47,14 @@ int main(){
             lastCheckedFpsTime = currentTime;
         }
 
-        WindowMakeCurrentContext(win1);
-        WindowClear(win1);
+        WindowMakeCurrentContext(window);
+        WindowClear(window);
         
         ShaderUse(shader);
         ShaderSetInteger(shader, "texture0", 0);
         TextureBind(texture, 0);
         MeshDraw(quad);
-        WindowSwapBuffers(win1);
+        WindowSwapBuffers(window);
         EnginePollEvents();
         fps++;
     }
@@ -63,7 +63,7 @@ int main(){
     ShaderDestroy(shader);
     MeshDestroy(quad);
 
-    WindowDestroy(win1);
+    WindowDestroy(window);
     EngineTerminate();
 
     return 0;
