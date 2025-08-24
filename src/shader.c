@@ -1,7 +1,7 @@
 #include "shader.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <glad/glad.h>
+#include "glad/glad.h"
 
 typedef void (*GLGetivFunc)(GLuint, GLenum, GLint*);
 typedef void (*GLGetInfoLogFunc)(GLuint, GLsizei, GLsizei*, GLchar*);

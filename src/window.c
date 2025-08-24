@@ -40,7 +40,7 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
 
     window->title = strdup(title);
     window->handle = glfwCreateWindow(width, height, title, NULL, shareContext);
-
+    
     if (!window->handle) {
         free(window->title);
         free(window);

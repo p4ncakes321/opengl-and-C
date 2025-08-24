@@ -1,6 +1,5 @@
 #include "mesh.h"
 #include "glad/glad.h"
-#include <GL/gl.h>
 #include <string.h>
 
 Mesh* MeshCreate(Vertex* vertices, size_t vertexCount, GLuint* indices, size_t indexCount) {

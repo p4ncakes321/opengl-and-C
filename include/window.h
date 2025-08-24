@@ -1,6 +1,7 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
+#include "renderer.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 
@@ -12,6 +13,7 @@ typedef void (*KeyCallback)(Window* window, int key, int scancode, int action, i
 
 struct Window {
     GLFWwindow* handle;
+    Renderer renderer;
     int width, height;
     char* title;
 

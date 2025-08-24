@@ -1,4 +1,7 @@
 #include "glad/glad.h"
+#include "renderPasses/geometrypass.h"
+#include "renderer.h"
+#include "renderpass.h"
 #include "shader.h"
 #include "texture.h"
 #include "window.h"
@@ -20,6 +23,9 @@ int main(){
     EngineInit();
     Window* window = WindowCreate(screen_width, screen_height, "Window1", NULL);
 
+    // render passes
+    RendererAddPass(&window->renderer, (RenderPass*)GeometryPassCreate());
+
     // position, color, normal, uv, uv2
     Vertex vertices[] = {
         {{ 0.5f,  0.5f, 0.0f}, {1,1,1,1}, {0,0,1}, {1,1}, {0,0}},
@@ -34,7 +40,6 @@ int main(){
     GLuint shader = ShaderCreate("shaders/default.vert", "shaders/default.frag");
 
     WindowSetKeyCallback(window, window_key_callback);
-
     WindowVsync(window, false);
 
     unsigned int fps = 0;
@@ -47,7 +52,6 @@ int main(){
             lastCheckedFpsTime = currentTime;
         }
 
-        WindowMakeCurrentContext(window);
         WindowClear(window);
         
         ShaderUse(shader);
