@@ -5,7 +5,7 @@
 #include "texture.h"
 
 typedef struct DefaultMaterial {
-    BaseMaterial base;
+    Material base;
     Texture* albedo;
 } DefaultMaterial;
 

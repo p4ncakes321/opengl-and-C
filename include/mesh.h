@@ -12,17 +12,18 @@ typedef struct Vertex {
     vec2 uv2;
 } Vertex;
 
-typedef struct Mesh {
+typedef struct Mesh Mesh;
+typedef void (*MeshDrawFunc)(Mesh* mesh, mat4* modelMatrices, size_t instanceCount);
+typedef void (*MeshDestroyFunc)(Mesh* mesh);
+
+struct Mesh {
+    MeshDrawFunc drawFunc;
+    MeshDestroyFunc destroyFunc;
+
     unsigned int VAO, VBO, EBO;
+    unsigned int instanceSSBO;
     size_t vertexCount;
     size_t indexCount;
-
-    Vertex* vertices;
-    GLuint* indices;
-} Mesh;
-
-Mesh* MeshCreate(Vertex* vertices, size_t vertexCount, GLuint* indices, size_t indexCount);
-void MeshDraw(Mesh* mesh);
-void MeshDestroy(Mesh* mesh);
+};
 
 #endif

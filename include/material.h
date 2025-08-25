@@ -2,12 +2,13 @@
 #define MATERIAL_H
 
 #include "shader.h"
+#include <cglm/cglm.h>
 
-typedef struct UniversalMaterial UniversalMaterial;
-typedef void (*BindFunc)(UniversalMaterial* mat, bool isForward);
-typedef void (*MatDestroyFunc)(UniversalMaterial* mat);
+typedef struct Material Material;
+typedef void (*BindFunc)(Material* mat, mat4* modelMatrix, size_t instanceCount, bool isForward);
+typedef void (*MatDestroyFunc)(Material* mat);
 
-typedef struct BaseMaterial {
+typedef struct Material {
     BindFunc bindFunc;
     MatDestroyFunc destroyFunc;
 
