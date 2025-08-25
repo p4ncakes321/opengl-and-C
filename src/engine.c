@@ -36,6 +36,10 @@ bool EngineInitializeGlad(void) {
     return false;
 };
 
+double EngineGetTime(void) {
+    return glfwGetTime();
+}
+
 void EnginePollEvents(void) {
     glfwPollEvents();
 }

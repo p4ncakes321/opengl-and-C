@@ -2,6 +2,7 @@
 #define WINDOW_H
 
 #include "renderer.h"
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 
@@ -36,5 +37,6 @@ int WindowShouldClose(Window* window);
 void WindowResize(Window* window, int x, int y);
 void WindowMakeCurrentContext(Window* window);
 void WindowVsync(Window* window, bool toggle);
+void WindowDepthTesting(Window* window, bool toggle);
 
 #endif

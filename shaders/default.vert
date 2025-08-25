@@ -9,6 +9,7 @@ layout(location = 4) in vec2 aUV2;
 out vec4 fragColor;
 out vec3 fragNormal;
 out vec3 fragPos;
+out vec2 fragUV;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -30,6 +31,7 @@ void main() {
     vec4 worldPos = m * vec4(aPos, 1.0);
     fragPos = worldPos.xyz;
     fragNormal = mat3(transpose(inverse(m))) * aNormal;
-    fragColor = vec4(abs(fragNormal), 1.0); // safe debug color
+    fragColor = aColor; 
+    fragUV = aUV;
     gl_Position = projection * view * worldPos;
 }

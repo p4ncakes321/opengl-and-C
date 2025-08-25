@@ -9,6 +9,7 @@ typedef struct Engine {
 void EngineInit(void);
 void EnginePollEvents(void);
 bool EngineInitializeGlad(void);
+double EngineGetTime(void);
 void EngineTerminate(void);
 
 #endif 

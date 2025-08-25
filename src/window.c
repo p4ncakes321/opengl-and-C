@@ -110,6 +110,17 @@ void WindowVsync(Window* window, bool toggle) {
     glfwSwapInterval(toggle ? 1 : 0);
 }
 
+void WindowDepthTesting(Window* window, bool toggle) {
+    if (!window || !window->handle) return;
+
+    WindowMakeCurrentContext(window);
+    if (toggle) {
+        glEnable(GL_DEPTH_TEST);
+    } else {
+        glDisable(GL_DEPTH_TEST);
+    }
+}
+
 void WindowMakeCurrentContext(Window* window) {
     glfwMakeContextCurrent(window->handle);
 }
