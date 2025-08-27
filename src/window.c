@@ -10,7 +10,7 @@ static void glfw_framebuffer_size_cb(GLFWwindow* glfw_window, int width, int hei
     if (!window) return;
 
     WindowResize(window, width, height);
-
+    RendererResize(&window->renderer, width, height);
     ResizeEvent ev = { window, width, height };
     EventManagerDispatch(window->sizeChanged, &ev);
 }

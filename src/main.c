@@ -1,20 +1,16 @@
-#include <stdlib.h>
-#include <time.h>
 #include <cglm/cglm.h>
+#include "camera.h"
+#include "cameras/perspectivecamera.h"
 #include "eventmanager.h"
+#include "mesh.h"
 #include "window.h"
 #include "engine.h"
 #include "renderer.h"
 #include "renderPasses/geometrypass.h"
 #include "materials/defaultmaterial.h"
 #include "meshes/staticmesh.h"
-#include "shader.h"
-
-#define NUM_CUBES 1000000
-
 static int screen_width = 800;
 static int screen_height = 600;
-mat4 projection, view;
 
 static void key_listener(void* userData, void* eventData) {
     Window* window = (Window*)userData;
@@ -26,20 +22,17 @@ static void key_listener(void* userData, void* eventData) {
 }
 
 static void resize_listener(void* userData, void* eventData) {
-    (void)userData; 
+    (void)userData;
     ResizeEvent* ev = (ResizeEvent*)eventData;
 
     screen_width  = ev->width;
     screen_height = ev->height;
-
-    glm_perspective(glm_rad(45.0f), (float)ev->width / (float)ev->height, 0.1f, 100.0f, projection);
-    glm_lookat((vec3){0,0,3}, (vec3){0,0,0}, (vec3){0,1,0}, view);
 }
 
 int main() {
     EngineInit();
 
-    Window* window = WindowCreate(screen_width, screen_height, "Instanced Cubes", NULL);
+    Window* window = WindowCreate(screen_width, screen_height, "Rotating Cube", NULL);
     if (!window) return -1;
 
     void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, NULL);
@@ -48,48 +41,72 @@ int main() {
     GeometryPass* geometryPass = GeometryPassCreate();
     RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
 
+    RendererResize(&window->renderer, screen_width, screen_height);
+
     WindowDepthTesting(window, true);
     WindowVsync(window, false);
 
     Vertex vertices[] = {
+        // Front face (z = 0.5)
         {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{0,0,1},{0,0},{0,0}},
         {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{0,0,1},{1,0},{1,0}},
         {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{0,0,1},{1,1},{1,1}},
         {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{0,0,1},{0,1},{0,1}},
+
+        // Back face (z = -0.5)
         {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{0,0,-1},{1,0},{1,0}},
         {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{0,0,-1},{1,1},{1,1}},
         {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{0,0,-1},{0,1},{0,1}},
-        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{0,0,-1},{0,0},{0,0}}
-    };
+        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{0,0,-1},{0,0},{0,0}},
 
+        // Left face (x = -0.5)
+        {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{-1,0,0},{0,0},{0,0}},
+        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{-1,0,0},{0,1},{0,1}},
+        {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{-1,0,0},{1,1},{1,1}},
+        {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{-1,0,0},{1,0},{1,0}},
+
+        // Right face (x = 0.5)
+        {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{1,0,0},{0,0},{0,0}},
+        {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{1,0,0},{0,1},{0,1}},
+        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{1,0,0},{1,1},{1,1}},
+        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{1,0,0},{1,0},{1,0}},
+
+        // Top face (y = 0.5)
+        {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{0,1,0},{0,0},{0,0}},
+        {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{0,1,0},{1,0},{1,0}},
+        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{0,1,0},{1,1},{1,1}},
+        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{0,1,0},{0,1},{0,1}},
+
+        // Bottom face (y = -0.5)
+        {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{0,-1,0},{0,0},{0,0}},
+        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{0,-1,0},{1,0},{1,0}},
+        {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{0,-1,0},{1,1},{1,1}},
+        {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{0,-1,0},{0,1},{0,1}}
+    };
     GLuint indices[] = {
-        0,1,2, 0,2,3,  4,5,6, 4,6,7,
-        3,2,6, 3,6,5,  0,4,7, 0,7,1,
-        0,3,5, 0,5,4,  1,7,6, 1,6,2
+        0,1,2, 0,2,3,       // front
+        4,5,6, 4,6,7,       // back
+        8,9,10, 8,10,11,    // left
+        12,13,14, 12,14,15, // right
+        16,17,18, 16,18,19, // top
+        20,21,22, 20,22,23  // bottom
     };
 
-    StaticMesh* cubeMesh = StaticMeshCreate(vertices, 8, indices, 36);
+    StaticMesh* cubeMesh = StaticMeshCreate(vertices, 24, indices, 36);
     DefaultMaterial* cubeMaterial = DefaultMaterialCreate("assets/crate.jpg");
+    PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,2.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
 
-    glm_perspective(glm_rad(45.0f), (float)screen_width/screen_height, 0.1f, 100.0f, projection);
-    glm_lookat((vec3){0,0,3}, (vec3){0,0,0}, (vec3){0,1,0}, view);
+    mat4 model;
+    glm_mat4_identity(model);
+    glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
+    glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
 
-    mat4* cubeModels = (mat4*)malloc(sizeof(mat4) * NUM_CUBES);
-    if (!cubeModels) { fprintf(stderr,"Failed to allocate cube matrices\n"); return -1; }
-
-    srand((unsigned int)time(NULL));
-    for (int i = 0; i < NUM_CUBES; i++) {
-        glm_mat4_identity(cubeModels[i]);
-        float x = ((rand()%2000)/1000.0f - 1.0f) * 2.0f;
-        float y = ((rand()%2000)/1000.0f - 1.0f) * 2.0f;
-        float z = -((rand()%1000)/1000.0f) * 5.0f;
-        glm_translate(cubeModels[i], (vec3){x, y, z});
-        glm_scale(cubeModels[i], (vec3){0.05f,0.05f,0.05f});
-    }
-
-    double lastFrame = EngineGetTime();
-    double lastTime = EngineGetTime();
+    double startTime = EngineGetTime();
+    double lastFrame = startTime;
+    double lastTime = startTime;
     int frames = 0;
+
+    const float rotation_speed = glm_rad(45.0f);
 
     while (!WindowShouldClose(window)) {
         EnginePollEvents();
@@ -97,22 +114,20 @@ int main() {
         double currentTime = EngineGetTime();
         double deltaTime = currentTime - lastFrame;
 
-        RenderObject cubeObject;
-        cubeObject.mesh = (Mesh*)cubeMesh;
-        cubeObject.material = (Material*)cubeMaterial;
-        cubeObject.modelMatrix = cubeModels;
-        cubeObject.instanceCount = NUM_CUBES;
+        float elapsed = (float)(currentTime - startTime);
+        float angle = elapsed * rotation_speed;
 
+        glm_mat4_identity(model);
+        glm_rotate(model, angle, (vec3){0.0f, 1.0f, 0.0f});
+        glm_rotate(model, angle * 0.25f, (vec3){1.0f, 0.0f, 0.0f});
+        glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
+        glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
+
+        RenderObject cubeObject = RenderObjectCreate((Mesh*)cubeMesh, (Material*)cubeMaterial, &model, 1);
         GeometryPassAddObject(geometryPass, cubeObject);
 
         WindowClear(window);
-
-        Shader shader = cubeMaterial->base.deferredShader;
-        ShaderUse(shader);
-        ShaderSetMat4(shader, "view", view);
-        ShaderSetMat4(shader, "projection", projection);
-
-        RendererRenderFrame(&window->renderer);
+        RendererRenderFrame(&window->renderer, (Camera*)camera);
         WindowSwapBuffers(window);
 
         frames++;
@@ -121,10 +136,9 @@ int main() {
             frames = 0;
             lastTime = currentTime;
         }
-       lastFrame = currentTime;
+        lastFrame = currentTime;
     }
 
-    free(cubeModels);
     RendererCleanUp(&window->renderer);
     WindowDestroy(window);
     EngineTerminate();

@@ -8,7 +8,7 @@ static void StaticMeshDraw(Mesh* mesh, mat4* modelMatrices, size_t instanceCount
     if (instanceCount > 1 && modelMatrices) {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, mesh->instanceSSBO);
         glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(mat4) * instanceCount, modelMatrices, GL_DYNAMIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mesh->instanceSSBO); // binding point must match shader
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mesh->instanceSSBO);
 
         glDrawElementsInstanced(GL_TRIANGLES, mesh->indexCount, GL_UNSIGNED_INT, 0, instanceCount);
     } else if (instanceCount == 1 && modelMatrices) {
