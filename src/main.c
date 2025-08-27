@@ -45,9 +45,6 @@ int main() {
     void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, NULL);
     void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, NULL);
 
-    EventManagerUnsubscribe(window->sizeChanged, resizeHandle);
-    EventManagerUnsubscribe(window->keyEvents, keyHandle);
-
     GeometryPass* geometryPass = GeometryPassCreate();
     RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
 
