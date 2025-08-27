@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <cglm/cglm.h>
+#include "eventmanager.h"
 #include "window.h"
 #include "engine.h"
 #include "renderer.h"
@@ -13,22 +14,43 @@
 
 static int screen_width = 800;
 static int screen_height = 600;
+mat4 projection, view;
 
-void key_callback(Window* window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+static void key_listener(void* userData, void* eventData) {
+    Window* window = (Window*)userData;
+    KeyEvent* ev = (KeyEvent*)eventData;
+
+    if (ev->key == GLFW_KEY_ESCAPE && ev->action == GLFW_PRESS) {
         WindowClose(window);
-    } 
+    }
+}
+
+static void resize_listener(void* userData, void* eventData) {
+    (void)userData; 
+    ResizeEvent* ev = (ResizeEvent*)eventData;
+
+    screen_width  = ev->width;
+    screen_height = ev->height;
+
+    glm_perspective(glm_rad(45.0f), (float)ev->width / (float)ev->height, 0.1f, 100.0f, projection);
+    glm_lookat((vec3){0,0,3}, (vec3){0,0,0}, (vec3){0,1,0}, view);
 }
 
 int main() {
     EngineInit();
+
     Window* window = WindowCreate(screen_width, screen_height, "Instanced Cubes", NULL);
     if (!window) return -1;
+
+    void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, NULL);
+    void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, NULL);
+
+    EventManagerUnsubscribe(window->sizeChanged, resizeHandle);
+    EventManagerUnsubscribe(window->keyEvents, keyHandle);
 
     GeometryPass* geometryPass = GeometryPassCreate();
     RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
 
-    WindowSetKeyCallback(window, key_callback);
     WindowDepthTesting(window, true);
     WindowVsync(window, false);
 
@@ -52,7 +74,6 @@ int main() {
     StaticMesh* cubeMesh = StaticMeshCreate(vertices, 8, indices, 36);
     DefaultMaterial* cubeMaterial = DefaultMaterialCreate("assets/crate.jpg");
 
-    mat4 projection, view;
     glm_perspective(glm_rad(45.0f), (float)screen_width/screen_height, 0.1f, 100.0f, projection);
     glm_lookat((vec3){0,0,3}, (vec3){0,0,0}, (vec3){0,1,0}, view);
 
@@ -69,17 +90,15 @@ int main() {
         glm_scale(cubeModels[i], (vec3){0.05f,0.05f,0.05f});
     }
 
-    float rotationAngle = 0.05f;
+    double lastFrame = EngineGetTime();
     double lastTime = EngineGetTime();
     int frames = 0;
 
     while (!WindowShouldClose(window)) {
         EnginePollEvents();
-        double currentTime = EngineGetTime();
-        double deltaTime = currentTime - lastTime;
 
-        for (int i = 0; i < NUM_CUBES; i++)
-            glm_rotate_y(cubeModels[i], rotationAngle * 0.5f * deltaTime, cubeModels[i]);
+        double currentTime = EngineGetTime();
+        double deltaTime = currentTime - lastFrame;
 
         RenderObject cubeObject;
         cubeObject.mesh = (Mesh*)cubeMesh;
@@ -105,6 +124,7 @@ int main() {
             frames = 0;
             lastTime = currentTime;
         }
+       lastFrame = currentTime;
     }
 
     free(cubeModels);
@@ -113,3 +133,4 @@ int main() {
     EngineTerminate();
     return 0;
 }
+

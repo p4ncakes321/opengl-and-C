@@ -1,16 +1,32 @@
 #ifndef WINDOW_H
 #define WINDOW_H
-
 #include "renderer.h"
+#include "eventmanager.h"
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 
 typedef struct Window Window;
 
-typedef void (*SizeChangedCallback)(Window* window, int width, int height);
-typedef void (*MouseMovedCallback)(Window* window, double x, double y);
-typedef void (*KeyCallback)(Window* window, int key, int scancode, int action, int mods);
+typedef struct {
+    Window* window;
+    int width;
+    int height;
+} ResizeEvent;
+
+typedef struct {
+    Window* window;
+    double x;
+    double y;
+} MouseMoveEvent;
+
+typedef struct {
+    Window* window;
+    int key;
+    int scancode;
+    int action;
+    int mods;
+} KeyEvent;
 
 struct Window {
     GLFWwindow* handle;
@@ -18,17 +34,13 @@ struct Window {
     int width, height;
     char* title;
 
-    SizeChangedCallback onSizeChanged;
-    MouseMovedCallback onMouseMoved;
-    KeyCallback onKey;
+    EventManager* sizeChanged;
+    EventManager* mouseMoved;
+    EventManager* keyEvents;
 };
 
 Window* WindowCreate(int width, int height, const char* title, GLFWwindow* shareContext);
 void WindowDestroy(Window* window);
-
-void WindowSetSizeChangedCallback(Window* window, SizeChangedCallback callback);
-void WindowSetMouseMovedCallback(Window* window, MouseMovedCallback callback);
-void WindowSetKeyCallback(Window* window, KeyCallback callback);
 
 void WindowSwapBuffers(Window* window);
 void WindowClear(Window* window);

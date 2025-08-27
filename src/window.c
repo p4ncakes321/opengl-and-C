@@ -1,45 +1,49 @@
-#include "glad/glad.h"
 #include "window.h"
 #include "engine.h"
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
+#include "glad/glad.h" 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-static void framebuffer_size_callback(GLFWwindow* glfw_window, int width, int height) {
+static void glfw_framebuffer_size_cb(GLFWwindow* glfw_window, int width, int height) {
     Window* window = (Window*)glfwGetWindowUserPointer(glfw_window);
     if (!window) return;
+
     WindowResize(window, width, height);
-    if (window->onSizeChanged) window->onSizeChanged(window, width, height);
+
+    ResizeEvent ev = { window, width, height };
+    EventManagerDispatch(window->sizeChanged, &ev);
 }
 
-static void cursor_position_callback(GLFWwindow* glfw_window, double x, double y) {
+static void glfw_cursor_pos_cb(GLFWwindow* glfw_window, double x, double y) {
     Window* window = (Window*)glfwGetWindowUserPointer(glfw_window);
     if (!window) return;
 
-    if (window->onMouseMoved) window->onMouseMoved(window, x, y);
+    MouseMoveEvent ev = { window, x, y };
+    EventManagerDispatch(window->mouseMoved, &ev);
 }
 
-static void key_callback(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
+static void glfw_key_cb(GLFWwindow* glfw_window, int key, int scancode, int action, int mods) {
     Window* window = (Window*)glfwGetWindowUserPointer(glfw_window);
     if (!window) return;
 
-    if (window->onKey) window->onKey(window, key, scancode, action, mods);
+    KeyEvent ev = { window, key, scancode, action, mods };
+    EventManagerDispatch(window->keyEvents, &ev);
 }
 
 void WindowResize(Window* window, int x, int y) {
+    if (!window) return;
     window->width = x;
     window->height = y;
-    glViewport(0,0, x, y);
+    glViewport(0, 0, x, y);
 }
 
 Window* WindowCreate(int width, int height, const char* title, GLFWwindow* shareContext) {
-    Window* window = calloc(1, sizeof(Window));
+    Window* window = (Window*)calloc(1, sizeof(Window));
     if (!window) return NULL;
 
-    window->title = strdup(title);
-    window->handle = glfwCreateWindow(width, height, title, NULL, shareContext);
+    window->title = strdup(title ? title : "Window");
+    window->handle = glfwCreateWindow(width, height, window->title, NULL, shareContext);
     window->renderer.passCount = 0;
     if (!window->handle) {
         free(window->title);
@@ -49,7 +53,7 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
 
     glfwMakeContextCurrent(window->handle);
     if (!EngineInitializeGlad()) {
-        printf("Failed to initialize GLAD\n");
+        fprintf(stderr, "Failed to initialize GLAD\n");
         glfwDestroyWindow(window->handle);
         free(window->title);
         free(window);
@@ -58,10 +62,14 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
 
     WindowResize(window, width, height);
 
+    window->sizeChanged = EventManagerCreate();
+    window->mouseMoved  = EventManagerCreate();
+    window->keyEvents   = EventManagerCreate();
+
     glfwSetWindowUserPointer(window->handle, window);
-    glfwSetFramebufferSizeCallback(window->handle, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window->handle, cursor_position_callback);
-    glfwSetKeyCallback(window->handle, key_callback);
+    glfwSetFramebufferSizeCallback(window->handle, glfw_framebuffer_size_cb);
+    glfwSetCursorPosCallback(window->handle, glfw_cursor_pos_cb);
+    glfwSetKeyCallback(window->handle, glfw_key_cb);
 
     return window;
 }
@@ -70,19 +78,12 @@ void WindowDestroy(Window* window) {
     if (!window) return;
     if (window->handle) glfwDestroyWindow(window->handle);
     if (window->title) free(window->title);
+
+    EventManagerFree(window->sizeChanged);
+    EventManagerFree(window->mouseMoved);
+    EventManagerFree(window->keyEvents);
+
     free(window);
-}
-
-void WindowSetSizeChangedCallback(Window* window, SizeChangedCallback callback) {
-    if (window) window->onSizeChanged = callback;
-}
-
-void WindowSetMouseMovedCallback(Window* window, MouseMovedCallback callback) {
-    if (window) window->onMouseMoved = callback;
-}
-
-void WindowSetKeyCallback(Window* window, KeyCallback callback) {
-    if (window) window->onKey = callback;
 }
 
 void WindowSwapBuffers(Window* window) {
@@ -105,22 +106,19 @@ int WindowShouldClose(Window* window) {
 
 void WindowVsync(Window* window, bool toggle) {
     if (!window || !window->handle) return;
-
     WindowMakeCurrentContext(window);
     glfwSwapInterval(toggle ? 1 : 0);
 }
 
 void WindowDepthTesting(Window* window, bool toggle) {
     if (!window || !window->handle) return;
-
     WindowMakeCurrentContext(window);
-    if (toggle) {
-        glEnable(GL_DEPTH_TEST);
-    } else {
-        glDisable(GL_DEPTH_TEST);
-    }
+    if (toggle) glEnable(GL_DEPTH_TEST);
+    else glDisable(GL_DEPTH_TEST);
 }
 
 void WindowMakeCurrentContext(Window* window) {
+    if (!window || !window->handle) return;
     glfwMakeContextCurrent(window->handle);
 }
+
