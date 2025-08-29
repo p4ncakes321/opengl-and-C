@@ -6,9 +6,7 @@
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
-#include "vector.h"
 
-DEFINE_VECTOR(CameraView*, CameraVector);
 typedef struct Window Window;
 
 typedef struct {
@@ -41,7 +39,7 @@ struct Window {
     EventManager* mouseMoved;
     EventManager* keyEvents;
 
-    CameraVector* cameras;
+    CameraViewVector* cameraViews;
 };
 
 Window* WindowCreate(int width, int height, const char* title, GLFWwindow* shareContext);
@@ -56,5 +54,6 @@ void WindowMakeCurrentContext(Window* window);
 void WindowVsync(Window* window, bool toggle);
 void WindowDepthTesting(Window* window, bool toggle);
 void WindowAttachCameraView(Window* window, CameraView* camera);
+void WindowRenderFrame(Window* window);
 
 #endif

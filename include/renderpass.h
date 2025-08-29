@@ -8,12 +8,14 @@
 
 typedef struct RenderPass RenderPass;
 typedef void (*renderMethod)(RenderPass* self, RenderPass* lastPass, Camera* camera); 
+typedef void (*cleanupMethod)(RenderPass* self);
 typedef void (*destroyMethod)(RenderPass* self);
 
 typedef struct RenderPass {
     int screen_width, screen_height;
     renderMethod render;
     destroyMethod destroy;
+    cleanupMethod cleanup;
 
     const char* name;
     

@@ -7,17 +7,20 @@ void RendererAddPass(Renderer* renderer, RenderPass* pass) {
     RenderPassVector_push(renderer->passes, pass);
 }
 
-void RendererRenderFrame(Renderer* renderer, CameraView* view) {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(view->viewport.x, view->viewport.y, view->viewport.width, view->viewport.height);
+void RendererRenderFrame(Renderer* renderer, CameraViewVector* views) {
+    for (size_t i = 0; i < views->count; i++) {
+        CameraView* view = views->data[i];
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(view->viewport.x, view->viewport.y, view->viewport.width, view->viewport.height);
+        for (size_t j = 0; j < renderer->passes->count; j++) {
+            RenderPass* pass = renderer->passes->data[j];
+            pass->render(pass, (j > 0 ? renderer->passes->data[j-1] : NULL), view->camera);
+        }
+    }
 
-    for (size_t i = 0; i < renderer->passes->count; i++) {
-        RenderPass* prev = (i > 0) ? renderer->passes->data[i - 1] : NULL;
+    for (size_t i=0; i < renderer->passes->count; i++) {
         RenderPass* pass = renderer->passes->data[i];
-
-        pass->screen_height = view->viewport.height;
-        pass->screen_width  = view->viewport.width;
-        pass->render(pass, prev, view->camera);
+        pass->cleanup(pass);
     }
 }
 

@@ -11,6 +11,10 @@ static void GeometryPassRender(RenderPass* self, RenderPass* lastPass, Camera* c
         renderObject->material->bindFunc(renderObject->material, renderObject->modelMatrix, renderObject->instanceCount, camera, false);
         renderObject->mesh->drawFunc(renderObject->mesh, renderObject->modelMatrix, renderObject->instanceCount);
     }
+}
+
+static void GeometryPassCleanUp(RenderPass* self) {
+    GeometryPass* pass = (GeometryPass*)self;
     ObjectVector_clear(pass->objects);
 }
 
@@ -25,6 +29,7 @@ GeometryPass* GeometryPassCreate() {
     pass->base.name = "GeometryPass";
     pass->base.render = GeometryPassRender;
     pass->base.destroy = GeometryPassDestroy;
+    pass->base.cleanup = GeometryPassCleanUp;
     pass->base.screen_height = 0;
     pass->base.screen_width = 0;
     pass->objects = ObjectVector_create();
@@ -33,6 +38,10 @@ GeometryPass* GeometryPassCreate() {
 
 void GeometryPassAddObject(GeometryPass* pass, RenderObject object) {
     ObjectVector_push(pass->objects, object);
+}
+
+void GeometryPassClearObjects(GeometryPass* pass) {
+    ObjectVector_clear(pass->objects);
 }
 
 RenderObject RenderObjectCreate(Mesh* mesh, Material* material, mat4* modelMatrix, size_t instanceCount) {

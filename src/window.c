@@ -37,8 +37,8 @@ void WindowResize(Window* window, int x, int y) {
     window->width = x;
     window->height = y;
 
-    for(size_t i=0; i < window->cameras->count; i++) {
-        CameraView* view = *CameraVector_get(window->cameras, i);
+    for(size_t i=0; i < window->cameraViews->count; i++) {
+        CameraView* view = window->cameraViews->data[i]; 
         if (view->resizeFunc)
             view->resizeFunc(view, x, y);
     }
@@ -66,7 +66,7 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
         return NULL;
     }
 
-    window->cameras = CameraVector_create();
+    window->cameraViews = CameraViewVector_create();
     window->renderer.passes = RenderPassVector_create();
     window->sizeChanged = EventManagerCreate();
     window->mouseMoved  = EventManagerCreate();
@@ -91,7 +91,7 @@ void WindowDestroy(Window* window) {
     EventManagerFree(window->sizeChanged);
     EventManagerFree(window->mouseMoved);
     EventManagerFree(window->keyEvents);
-    CameraVector_free(window->cameras);
+    CameraViewVector_free(window->cameraViews);
 
     free(window);
 }
@@ -134,5 +134,9 @@ void WindowMakeCurrentContext(Window* window) {
 
 void WindowAttachCameraView(Window* window, CameraView* camera) {
     camera->resizeFunc(camera, window->width, window->height);
-    CameraVector_push(window->cameras, camera);
+    CameraViewVector_push(window->cameraViews, camera);
+}
+
+void WindowRenderFrame(Window* window) {
+    RendererRenderFrame(&window->renderer, window->cameraViews);
 }

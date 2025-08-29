@@ -23,6 +23,7 @@ typedef struct GeometryPass {
 
 GeometryPass* GeometryPassCreate();
 void GeometryPassAddObject(GeometryPass* pass, RenderObject object);
+void GeometryPassClearObjects(GeometryPass* pass);
 
 RenderObject RenderObjectCreate(Mesh* mesh, Material* material, mat4* modelMatrix, size_t instanceCount);
 

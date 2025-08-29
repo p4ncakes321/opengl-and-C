@@ -1,6 +1,7 @@
 #include <cglm/cglm.h>
 #include "camera.h"
 #include "cameras/perspectivecamera.h"
+#include "cameraviews/grid.h"
 #include "eventmanager.h"
 #include "mesh.h"
 #include "window.h"
@@ -36,7 +37,6 @@ int main() {
 
     Window* window = WindowCreate(screen_width, screen_height, "Rotating Cube", NULL);
     PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,2.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
-    FullScreenCameraView* view = FullScreenCameraViewCreate((Camera*)camera); 
 
     void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, NULL);
     void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, NULL);
@@ -45,9 +45,17 @@ int main() {
     RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
     RendererResize(&window->renderer, screen_width, screen_height);
 
-    WindowAttachCameraView(window, (CameraView*)view);
     WindowDepthTesting(window, true);
     WindowVsync(window, false);
+
+    int rows = 3;
+    int cols = 3;
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            GridCameraView* gridView = GridCameraViewCreate((Camera*)camera, r, c, rows, cols);
+            WindowAttachCameraView(window, (CameraView*)gridView);
+        }
+    }
 
     Vertex vertices[] = {
         // Front face (z = 0.5)
@@ -129,7 +137,7 @@ int main() {
         GeometryPassAddObject(geometryPass, cubeObject);
 
         WindowClear(window);
-        RendererRenderFrame(&window->renderer, (CameraView*)view);
+        WindowRenderFrame(window);
         WindowSwapBuffers(window);
 
         frames++;
