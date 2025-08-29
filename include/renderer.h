@@ -1,18 +1,19 @@
 #ifndef RENDERER_H
 #define RENDERER_H
-#include "camera.h"
-#define MAX_RENDER_PASSES 8
 
+#include "camera.h"
 #include "renderpass.h"
+#include "vector.h"
+
+DEFINE_VECTOR(RenderPass*, RenderPassVector)
 
 typedef struct Renderer {
-    RenderPass* passes[MAX_RENDER_PASSES];
-    size_t passCount;
+    RenderPassVector* passes;
 } Renderer;
 
 void RendererAddPass(Renderer* renderer, RenderPass* pass);
 void RendererRenderFrame(Renderer* renderer, CameraView* camera);
-void RendererCleanUp(Renderer* renderer);
+void RendererFree(Renderer* renderer);
 void RendererResize(Renderer* renderer, int screen_width, int screen_height);
 
 #endif

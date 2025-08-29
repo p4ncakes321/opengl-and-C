@@ -141,7 +141,6 @@ int main() {
         lastFrame = currentTime;
     }
 
-    RendererCleanUp(&window->renderer);
     WindowDestroy(window);
     EngineTerminate();
     return 0;

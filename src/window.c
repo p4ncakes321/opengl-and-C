@@ -1,6 +1,7 @@
 #include "window.h"
 #include "engine.h"
 #include "glad/glad.h" 
+#include "renderer.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -49,7 +50,7 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
 
     window->title = strdup(title ? title : "Window");
     window->handle = glfwCreateWindow(width, height, window->title, NULL, shareContext);
-    window->renderer.passCount = 0;
+
     if (!window->handle) {
         free(window->title);
         free(window);
@@ -66,6 +67,7 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
     }
 
     window->cameras = CameraVector_create();
+    window->renderer.passes = RenderPassVector_create();
     window->sizeChanged = EventManagerCreate();
     window->mouseMoved  = EventManagerCreate();
     window->keyEvents   = EventManagerCreate();
@@ -85,6 +87,7 @@ void WindowDestroy(Window* window) {
     if (window->handle) glfwDestroyWindow(window->handle);
     if (window->title) free(window->title);
 
+    RendererFree(&window->renderer); 
     EventManagerFree(window->sizeChanged);
     EventManagerFree(window->mouseMoved);
     EventManagerFree(window->keyEvents);
