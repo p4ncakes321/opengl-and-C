@@ -9,6 +9,8 @@
 #include "renderPasses/geometrypass.h"
 #include "materials/defaultmaterial.h"
 #include "meshes/staticmesh.h"
+#include "cameraviews/fullscreen.h"
+
 static int screen_width = 800;
 static int screen_height = 600;
 
@@ -33,16 +35,17 @@ int main() {
     EngineInit();
 
     Window* window = WindowCreate(screen_width, screen_height, "Rotating Cube", NULL);
-    if (!window) return -1;
+    PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,2.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
+    FullScreenCameraView* view = FullScreenCameraViewCreate((Camera*)camera); 
 
     void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, NULL);
     void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, NULL);
 
     GeometryPass* geometryPass = GeometryPassCreate();
     RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
-
     RendererResize(&window->renderer, screen_width, screen_height);
 
+    WindowAttachCameraView(window, (CameraView*)view);
     WindowDepthTesting(window, true);
     WindowVsync(window, false);
 
@@ -94,7 +97,6 @@ int main() {
 
     StaticMesh* cubeMesh = StaticMeshCreate(vertices, 24, indices, 36);
     DefaultMaterial* cubeMaterial = DefaultMaterialCreate("assets/crate.jpg");
-    PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,2.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
 
     mat4 model;
     glm_mat4_identity(model);
@@ -127,7 +129,7 @@ int main() {
         GeometryPassAddObject(geometryPass, cubeObject);
 
         WindowClear(window);
-        RendererRenderFrame(&window->renderer, (Camera*)camera);
+        RendererRenderFrame(&window->renderer, (CameraView*)view);
         WindowSwapBuffers(window);
 
         frames++;

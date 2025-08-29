@@ -11,14 +11,15 @@ void RendererAddPass(Renderer* renderer, RenderPass* pass) {
     }
 } 
 
-void RendererRenderFrame(Renderer* renderer, Camera* camera) {
-    if (renderer->passCount > 0) {
-        RenderPass* pass = renderer->passes[0];
-        camera->getScrSizeFunc(camera, pass->screen_width, pass->screen_height);
-    }
+void RendererRenderFrame(Renderer* renderer, CameraView* view) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(view->viewport.x, view->viewport.y, view->viewport.width, view->viewport.height);
+
     for (size_t i = 0; i < renderer->passCount; i++) {
         RenderPass* prev = (i > 0) ? renderer->passes[i - 1] : NULL;
-        renderer->passes[i]->render(renderer->passes[i], prev, camera);
+        renderer->passes[i]->screen_height = view->viewport.height;
+        renderer->passes[i]->screen_width = view->viewport.width;
+        renderer->passes[i]->render(renderer->passes[i], prev, view->camera);
     }
 }
 

@@ -1,11 +1,14 @@
 #ifndef WINDOW_H
 #define WINDOW_H
+#include "camera.h"
 #include "renderer.h"
 #include "eventmanager.h"
 #include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
+#include "vector.h"
 
+DEFINE_VECTOR(CameraView*, CameraVector);
 typedef struct Window Window;
 
 typedef struct {
@@ -37,6 +40,8 @@ struct Window {
     EventManager* sizeChanged;
     EventManager* mouseMoved;
     EventManager* keyEvents;
+
+    CameraVector* cameras;
 };
 
 Window* WindowCreate(int width, int height, const char* title, GLFWwindow* shareContext);
@@ -50,5 +55,6 @@ void WindowResize(Window* window, int x, int y);
 void WindowMakeCurrentContext(Window* window);
 void WindowVsync(Window* window, bool toggle);
 void WindowDepthTesting(Window* window, bool toggle);
+void WindowAttachCameraView(Window* window, CameraView* camera);
 
 #endif

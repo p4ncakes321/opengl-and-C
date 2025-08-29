@@ -11,7 +11,7 @@ typedef struct Renderer {
 } Renderer;
 
 void RendererAddPass(Renderer* renderer, RenderPass* pass);
-void RendererRenderFrame(Renderer* renderer, Camera* camera);
+void RendererRenderFrame(Renderer* renderer, CameraView* camera);
 void RendererCleanUp(Renderer* renderer);
 void RendererResize(Renderer* renderer, int screen_width, int screen_height);
 

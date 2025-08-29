@@ -32,3 +32,9 @@ void CameraGetViewMatrix(Camera* camera, mat4 out) {
     glm_vec3_add(camera->position, camera->forward, center);
     glm_lookat(camera->position, center, camera->up, out);
 }
+
+void CameraViewIntialize(CameraView* cameraView, Camera* camera, Viewport viewport, onViewResize resizeFunc) {
+    cameraView->resizeFunc = resizeFunc;
+    cameraView->viewport = viewport;
+    cameraView->camera = camera;
+}
