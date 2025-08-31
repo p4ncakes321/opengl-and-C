@@ -1,8 +1,12 @@
 #include <cglm/cglm.h>
 #include "camera.h"
 #include "cameras/perspectivecamera.h"
-#include "cameraviews/grid.h"
+#include "cameraviews/fullscreen.h"
+#include "components/materialComponent.h"
+#include "components/meshcomponent.h"
+#include "components/transformcomponent.h"
 #include "eventmanager.h"
+#include "material.h"
 #include "mesh.h"
 #include "window.h"
 #include "engine.h"
@@ -10,7 +14,7 @@
 #include "renderPasses/geometrypass.h"
 #include "materials/defaultmaterial.h"
 #include "meshes/staticmesh.h"
-#include "cameraviews/fullscreen.h"
+#include "ecs.h"
 
 static int screen_width = 800;
 static int screen_height = 600;
@@ -48,14 +52,8 @@ int main() {
     WindowDepthTesting(window, true);
     WindowVsync(window, false);
 
-    int rows = 3;
-    int cols = 3;
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
-            GridCameraView* gridView = GridCameraViewCreate((Camera*)camera, r, c, rows, cols);
-            WindowAttachCameraView(window, (CameraView*)gridView);
-        }
-    }
+    FullScreenCameraView* view = FullScreenCameraViewCreate((Camera*)camera);
+    WindowAttachCameraView(window, (CameraView*)view);
 
     Vertex vertices[] = {
         // Front face (z = 0.5)
@@ -106,17 +104,22 @@ int main() {
     StaticMesh* cubeMesh = StaticMeshCreate(vertices, 24, indices, 36);
     DefaultMaterial* cubeMaterial = DefaultMaterialCreate("assets/crate.jpg");
 
-    mat4 model;
-    glm_mat4_identity(model);
-    glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
-    glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
+    ECS* ecs = ECS_Create();
+    Entity cubeEntity = ECS_CreateEntity(ecs);
+
+    MeshComponent* meshComponent = MeshComponentCreate((Mesh*)cubeMesh, 1);
+    MaterialComponent* materialComponent = MaterialComponentCreate((Material*)cubeMaterial);
+    TransformComponent* transformComponent = TransformComponentCreate((vec3){0.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){1.0f,1.0f,1.0f});
+
+    ECS_AddMesh(ecs, cubeEntity, meshComponent); 
+    ECS_AddMaterial(ecs, cubeEntity, materialComponent);
+    ECS_AddTransform(ecs, cubeEntity, transformComponent);
 
     double startTime = EngineGetTime();
     double lastFrame = startTime;
     double lastTime = startTime;
     int frames = 0;
-
-    const float rotation_speed = glm_rad(45.0f);
+    float rotationSpeed = 1.0f;
 
     while (!WindowShouldClose(window)) {
         EnginePollEvents();
@@ -124,16 +127,16 @@ int main() {
         double currentTime = EngineGetTime();
         double deltaTime = currentTime - lastFrame;
 
-        float elapsed = (float)(currentTime - startTime);
-        float angle = elapsed * rotation_speed;
+        TransformComponent* tComp = ECS_GetTransform(ecs, cubeEntity);
+        tComp->rotations[0][1] += rotationSpeed * deltaTime;
+        TransformComponentSetRotationAt(tComp, 0, tComp->rotations[0]);
 
-        glm_mat4_identity(model);
-        glm_rotate(model, angle, (vec3){0.0f, 1.0f, 0.0f});
-        glm_rotate(model, angle * 0.25f, (vec3){1.0f, 0.0f, 0.0f});
-        glm_translate(model, (vec3){0.0f, 0.0f, 0.0f});
-        glm_scale(model, (vec3){1.0f, 1.0f, 1.0f});
-
-        RenderObject cubeObject = RenderObjectCreate((Mesh*)cubeMesh, (Material*)cubeMaterial, &model, 1);
+        RenderObject cubeObject = RenderObjectCreate(
+            ECS_GetMesh(ecs, cubeEntity)->mesh,
+            ECS_GetMaterial(ecs, cubeEntity)->material,
+            ECS_GetTransform(ecs, cubeEntity)->modelMatrices,
+            ECS_GetMesh(ecs, cubeEntity)->instanceCount
+        );
         GeometryPassAddObject(geometryPass, cubeObject);
 
         WindowClear(window);
@@ -149,6 +152,7 @@ int main() {
         lastFrame = currentTime;
     }
 
+    ECS_Destroy(ecs);
     WindowDestroy(window);
     EngineTerminate();
     return 0;

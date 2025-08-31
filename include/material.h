@@ -15,7 +15,7 @@ typedef struct Material {
 
     Shader deferredShader;
     Shader forwardShader;
-} BaseMaterial;
+} Material;
 
 #endif
 
