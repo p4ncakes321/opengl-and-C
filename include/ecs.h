@@ -3,6 +3,7 @@
 
 #include "components/materialComponent.h"
 #include "ecscomponents.h"
+#include "ecscomponentmethods.h"
 #include "components/transformcomponent.h"
 #include "components/meshcomponent.h"
 
@@ -20,19 +21,14 @@ typedef struct ECS {
     MeshComponentStorage* meshes;
 } ECS;
 
+DEFINE_ECS_COMPONENT_METHODS(TransformComponent, transforms);
+DEFINE_ECS_COMPONENT_METHODS(MaterialComponent, materials);
+DEFINE_ECS_COMPONENT_METHODS(MeshComponent, meshes);
+
 ECS* ECS_Create();
 void ECS_Destroy(ECS* ecs);
 
 Entity ECS_CreateEntity(ECS* ecs);
 void ECS_DestroyEntity(ECS* ecs, Entity e);
-
-void ECS_AddTransform(ECS* ecs, Entity e, TransformComponent* comp);
-TransformComponent* ECS_GetTransform(ECS* ecs, Entity e);
-
-void ECS_AddMaterial(ECS* ecs, Entity e, MaterialComponent* comp);
-MaterialComponent* ECS_GetMaterial(ECS* ecs, Entity e);
-
-void ECS_AddMesh(ECS* ecs, Entity e, MeshComponent* comp);
-MeshComponent* ECS_GetMesh(ECS* ecs, Entity e);
 
 #endif

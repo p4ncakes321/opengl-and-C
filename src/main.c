@@ -111,9 +111,9 @@ int main() {
     MaterialComponent* materialComponent = MaterialComponentCreate((Material*)cubeMaterial);
     TransformComponent* transformComponent = TransformComponentCreate((vec3){0.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){1.0f,1.0f,1.0f});
 
-    ECS_AddMesh(ecs, cubeEntity, meshComponent); 
-    ECS_AddMaterial(ecs, cubeEntity, materialComponent);
-    ECS_AddTransform(ecs, cubeEntity, transformComponent);
+    ECS_AddMeshComponent(ecs, cubeEntity, meshComponent); 
+    ECS_AddMaterialComponent(ecs, cubeEntity, materialComponent);
+    ECS_AddTransformComponent(ecs, cubeEntity, transformComponent);
 
     double startTime = EngineGetTime();
     double lastFrame = startTime;
@@ -127,15 +127,15 @@ int main() {
         double currentTime = EngineGetTime();
         double deltaTime = currentTime - lastFrame;
 
-        TransformComponent* tComp = ECS_GetTransform(ecs, cubeEntity);
+        TransformComponent* tComp = ECS_GetTransformComponent(ecs, cubeEntity);
         tComp->rotations[0][1] += rotationSpeed * deltaTime;
         TransformComponentSetRotationAt(tComp, 0, tComp->rotations[0]);
 
         RenderObject cubeObject = RenderObjectCreate(
-            ECS_GetMesh(ecs, cubeEntity)->mesh,
-            ECS_GetMaterial(ecs, cubeEntity)->material,
-            ECS_GetTransform(ecs, cubeEntity)->modelMatrices,
-            ECS_GetMesh(ecs, cubeEntity)->instanceCount
+            ECS_GetMeshComponent(ecs, cubeEntity)->mesh,
+            ECS_GetMaterialComponent(ecs, cubeEntity)->material,
+            ECS_GetTransformComponent(ecs, cubeEntity)->modelMatrices,
+            ECS_GetMeshComponent(ecs, cubeEntity)->instanceCount
         );
         GeometryPassAddObject(geometryPass, cubeObject);
 
