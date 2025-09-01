@@ -1,4 +1,5 @@
 #include <cglm/cglm.h>
+#include <stdio.h>
 #include "camera.h"
 #include "cameras/perspectivecamera.h"
 #include "cameraviews/fullscreen.h"
@@ -8,6 +9,7 @@
 #include "eventmanager.h"
 #include "material.h"
 #include "mesh.h"
+#include "renderPasses/outputpass.h"
 #include "window.h"
 #include "engine.h"
 #include "renderer.h"
@@ -40,13 +42,15 @@ int main() {
     EngineInit();
 
     Window* window = WindowCreate(screen_width, screen_height, "Rotating Cube", NULL);
-    PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,2.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
+    PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,3.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
 
-    void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, NULL);
-    void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, NULL);
+    void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, window);
+    void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, window);
 
     GeometryPass* geometryPass = GeometryPassCreate();
+    OutputPass* outputPass = OutputPassCreate(&geometryPass->gbuffer);
     RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
+    RendererAddPass(&window->renderer, (RenderPass*)outputPass);
     RendererResize(&window->renderer, screen_width, screen_height);
 
     WindowDepthTesting(window, true);
@@ -105,15 +109,29 @@ int main() {
     DefaultMaterial* cubeMaterial = DefaultMaterialCreate("assets/crate.jpg");
 
     ECS* ecs = ECS_Create();
-    Entity cubeEntity = ECS_CreateEntity(ecs);
+    Entity parentCube = ECS_CreateEntity(ecs);
+    TransformComponent* parentTransform = TransformComponentCreate(
+        (vec3){0.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){1.0f,1.0f,1.0f}
+    );
+    MeshComponent* parentMesh = MeshComponentCreate((Mesh*)cubeMesh, 1);
+    MaterialComponent* parentMat = MaterialComponentCreate((Material*)cubeMaterial);
 
-    MeshComponent* meshComponent = MeshComponentCreate((Mesh*)cubeMesh, 1);
-    MaterialComponent* materialComponent = MaterialComponentCreate((Material*)cubeMaterial);
-    TransformComponent* transformComponent = TransformComponentCreate((vec3){0.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){1.0f,1.0f,1.0f});
+    ECS_AddTransformComponent(ecs, parentCube, parentTransform);
+    ECS_AddMeshComponent(ecs, parentCube, parentMesh);
+    ECS_AddMaterialComponent(ecs, parentCube, parentMat);
 
-    ECS_AddMeshComponent(ecs, cubeEntity, meshComponent); 
-    ECS_AddMaterialComponent(ecs, cubeEntity, materialComponent);
-    ECS_AddTransformComponent(ecs, cubeEntity, transformComponent);
+    Entity childCube = ECS_CreateEntity(ecs);
+    TransformComponent* childTransform = TransformComponentCreate(
+        (vec3){1.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){0.5f,0.5f,0.5f}
+    );
+    MeshComponent* childMesh = MeshComponentCreate((Mesh*)cubeMesh, 1);
+    MaterialComponent* childMat = MaterialComponentCreate((Material*)cubeMaterial);
+
+    ECS_AddTransformComponent(ecs, childCube, childTransform);
+    ECS_AddMeshComponent(ecs, childCube, childMesh);
+    ECS_AddMaterialComponent(ecs, childCube, childMat);
+
+    ECS_SetParent(ecs, childCube, parentCube);
 
     double startTime = EngineGetTime();
     double lastFrame = startTime;
@@ -127,17 +145,22 @@ int main() {
         double currentTime = EngineGetTime();
         double deltaTime = currentTime - lastFrame;
 
-        TransformComponent* tComp = ECS_GetTransformComponent(ecs, cubeEntity);
-        tComp->rotations[0][1] += rotationSpeed * deltaTime;
-        TransformComponentSetRotationAt(tComp, 0, tComp->rotations[0]);
+        TransformComponent* tParent = ECS_GetTransformComponent(ecs, parentCube);
+        tParent->rotations[0][1] += rotationSpeed * deltaTime;
+        TransformComponentSetRotationAt(tParent, 0, tParent->rotations[0]);
 
-        RenderObject cubeObject = RenderObjectCreate(
-            ECS_GetMeshComponent(ecs, cubeEntity)->mesh,
-            ECS_GetMaterialComponent(ecs, cubeEntity)->material,
-            ECS_GetTransformComponent(ecs, cubeEntity)->modelMatrices,
-            ECS_GetMeshComponent(ecs, cubeEntity)->instanceCount
-        );
-        GeometryPassAddObject(geometryPass, cubeObject);
+        Entity entities[] = { parentCube, childCube };
+        for (int i = 0; i < 2; ++i) {
+            Entity e = entities[i];
+            TransformComponent* t = ECS_GetTransformComponent(ecs, e);
+            RenderObject obj = RenderObjectCreate(
+                ECS_GetMeshComponent(ecs, e)->mesh,
+                ECS_GetMaterialComponent(ecs, e)->material,
+                ECS_GetWorldTransform(ecs, e),
+                ECS_GetMeshComponent(ecs, e)->instanceCount
+            );
+            GeometryPassAddObject(geometryPass, obj);
+        }
 
         WindowClear(window);
         WindowRenderFrame(window);

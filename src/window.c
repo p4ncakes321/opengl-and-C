@@ -65,13 +65,15 @@ Window* WindowCreate(int width, int height, const char* title, GLFWwindow* share
         free(window);
         return NULL;
     }
+    
+    RendererInit(&window->renderer, width, height);
 
     window->cameraViews = CameraViewVector_create();
     window->renderer.passes = RenderPassVector_create();
     window->sizeChanged = EventManagerCreate();
     window->mouseMoved  = EventManagerCreate();
     window->keyEvents   = EventManagerCreate();
-
+    
     WindowResize(window, width, height);
 
     glfwSetWindowUserPointer(window->handle, window);
@@ -101,6 +103,7 @@ void WindowSwapBuffers(Window* window) {
 }
 
 void WindowClose(Window* window) {
+    WindowMakeCurrentContext(window);
     if (window && window->handle) glfwSetWindowShouldClose(window->handle, 1);
 }
 

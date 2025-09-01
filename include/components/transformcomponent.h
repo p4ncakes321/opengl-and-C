@@ -7,6 +7,7 @@
 typedef struct TransformComponent {
     size_t instanceCount;
     mat4* modelMatrices;
+    mat4* worldMatrices;
     vec3* positions;
     vec3* rotations;
     vec3* scales;
@@ -24,6 +25,8 @@ void TransformComponentSetScale(TransformComponent* component, vec3 scale);
 void TransformComponentSetPositionAt(TransformComponent* component, size_t index, vec3 position);
 void TransformComponentSetRotationAt(TransformComponent* component, size_t index, vec3 rotation);
 void TransformComponentSetScaleAt(TransformComponent* component, size_t index, vec3 scale);
+
+void TransformComponentGetAverageMatrix(TransformComponent* component, mat4 out);
 
 #endif
 

@@ -1,16 +1,34 @@
 #include "renderPasses/geometrypass.h"
 #include "camera.h"
+#include "gbuffer.h"
 #include "renderpass.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 static void GeometryPassRender(RenderPass* self, RenderPass* lastPass, Camera* camera) {
     GeometryPass* pass = (GeometryPass*)self;
+    GBufferBind(&pass->gbuffer);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     for (size_t i=0; i < pass->objects->count; i++) {
         RenderObject* renderObject = ObjectVector_get(pass->objects, i);
-        renderObject->material->bindFunc(renderObject->material, renderObject->modelMatrix, renderObject->instanceCount, camera, false);
+        renderObject->material->bindFunc(
+            renderObject->material,
+            renderObject->modelMatrix,
+            renderObject->instanceCount,
+            camera,
+            false
+        );
         renderObject->mesh->drawFunc(renderObject->mesh, renderObject->modelMatrix, renderObject->instanceCount);
     }
+
+    GBufferUnbind(&pass->gbuffer);
+}
+
+
+static void GeometryPassResize(RenderPass* self, int width, int height) {
+    GeometryPass* pass = (GeometryPass*)self;
+    GBufferResize(&pass->gbuffer, width, height);
 }
 
 static void GeometryPassCleanUp(RenderPass* self) {
@@ -21,6 +39,7 @@ static void GeometryPassCleanUp(RenderPass* self) {
 static void GeometryPassDestroy(RenderPass* self) {
     GeometryPass* pass = (GeometryPass*)self;
     ObjectVector_free(pass->objects);
+    GBufferDestroy(&pass->gbuffer);
     free(pass);
 }
 
@@ -30,9 +49,11 @@ GeometryPass* GeometryPassCreate() {
     pass->base.render = GeometryPassRender;
     pass->base.destroy = GeometryPassDestroy;
     pass->base.cleanup = GeometryPassCleanUp;
+    pass->base.resize = GeometryPassResize;
     pass->base.screen_height = 0;
     pass->base.screen_width = 0;
     pass->objects = ObjectVector_create();
+    pass->gbuffer = GBufferCreate();
     return pass;
 }
 

@@ -23,11 +23,13 @@ static void em_grow_if_needed(EventManager* em) {
 }
 
 static void em_remove(EventManager* em, size_t i) {
+    if (i >= em->count) return;
     Listener* target = em->list[i];
-    Listener* last = em->list[em->count - 1];
-    if (last != target) em->list[i] = last;
-    em->count--;
     free(target);
+    for (size_t j = i; j < em->count - 1; j++) {
+        em->list[j] = em->list[j + 1];
+    }
+    em->count--;
 }
 
 static void em_cleanup(EventManager* em) {
@@ -95,12 +97,21 @@ void EventManagerUnsubscribe(EventManager* em, void* handle) {
 }
 
 void EventManagerUnsubscribeAllForUserData(EventManager* em, void* userData) {
+    if (!em) return;
     for (size_t i = 0; i < em->count;) {
         Listener* l = em->list[i];
         if (l->userData == userData && !l->removed) {
-            if (em->inDispatch) { l->removed = true; l->fn = NULL; em->needsCleanup = true; ++i; }
-            else { em_remove(em, i); }
-        } else ++i;
+            if (em->inDispatch) {
+                l->removed = true;
+                l->fn = NULL;
+                em->needsCleanup = true;
+                i++; 
+            } else {
+                em_remove(em, i);
+            }
+        } else {
+            i++; 
+        }
     }
 }
 

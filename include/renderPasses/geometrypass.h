@@ -1,6 +1,7 @@
 #ifndef GEOMPASS_H
 #define GEOMPASS_H
 
+#include "gbuffer.h"
 #include "renderpass.h"
 #include "vector.h"
 #include "material.h"
@@ -18,6 +19,7 @@ DEFINE_VECTOR(RenderObject, ObjectVector)
 
 typedef struct GeometryPass {
     RenderPass base;
+    GBuffer gbuffer;
     ObjectVector* objects; 
 } GeometryPass;
 

@@ -1,4 +1,3 @@
-
 #ifndef ECS_H
 #define ECS_H
 
@@ -6,11 +5,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "vector.h"
 #include "components/transformcomponent.h"
 #include "components/materialComponent.h"
 #include "components/meshcomponent.h"
 
 typedef uint32_t Entity;
+DEFINE_VECTOR(Entity, EntityVector);
+
+#define INVALID_ENTITY ((Entity)UINT32_MAX)
 
 #define INDEX_BITS 24u
 #define INDEX_MASK ((1u << INDEX_BITS) - 1u)
@@ -101,6 +104,8 @@ typedef struct ECS {
 #define X(T) T##Storage* T##_storage;
     ECS_COMPONENTS
 #undef X
+    Entity *parents;
+    EntityVector **children;
 } ECS;
 
 int EntityList_ensure_capacity(ECS* ecs, size_t idx);
@@ -117,6 +122,12 @@ void ECS_Destroy(ECS* ecs);
 Entity ECS_CreateEntity(ECS* ecs);
 void ECS_DestroyEntity(ECS* ecs, Entity e);
 int Entity_IsAlive(ECS* ecs, Entity e);
+
+int ECS_SetParent(ECS* ecs, Entity child, Entity parent);
+Entity ECS_GetParent(ECS* ecs, Entity child);
+EntityVector* ECS_GetChildren(ECS* ecs, Entity parent);
+
+mat4* ECS_GetWorldTransform(ECS* ecs, Entity e);
 
 #endif
 

@@ -40,7 +40,7 @@ DefaultMaterial* DefaultMaterialCreate(const char* albedoPath) {
     material->albedo = TextureCreate(albedoPath, true, true);
     material->base.bindFunc = DefaultMaterialBind;
     material->base.destroyFunc = DefaultMaterialDestroy;
-    material->base.deferredShader = ShaderCreate("shaders/default.vert", "shaders/default.frag");
+    material->base.deferredShader = ShaderCreate("shaders/geom.vert", "shaders/geom.frag");
     material->base.forwardShader = ShaderCreate("shaders/default.vert", "shaders/default.frag");
     return material;
 }

@@ -10,11 +10,13 @@ DEFINE_VECTOR(RenderPass*, RenderPassVector)
 
 typedef struct Renderer {
     RenderPassVector* passes;
+    int width, height;
 } Renderer;
 
 void RendererAddPass(Renderer* renderer, RenderPass* pass);
 void RendererRenderFrame(Renderer* renderer, CameraViewVector* camera);
 void RendererFree(Renderer* renderer);
+void RendererInit(Renderer* renderer, int screen_width, int screen_height);
 void RendererResize(Renderer* renderer, int screen_width, int screen_height);
 
 #endif
