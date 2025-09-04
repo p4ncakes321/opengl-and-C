@@ -19,3 +19,6 @@ void MeshComponentSetInstanceCount(MeshComponent* component, size_t instanceCoun
     if (!component) return;
     component->instanceCount = instanceCount;
 }
+
+void MeshComponentDestroy(MeshComponent* component) {
+}

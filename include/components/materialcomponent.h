@@ -10,6 +10,7 @@ typedef struct MaterialComponent {
 
 MaterialComponent* MaterialComponentCreate(Material* material);
 void MaterialComponentSetMaterial(MaterialComponent* component, Material* material);
+void MaterialComponentDestroy(MaterialComponent* component);
 
 #endif
 

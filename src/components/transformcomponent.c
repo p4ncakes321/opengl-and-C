@@ -148,3 +148,32 @@ void TransformComponentSetScaleAt(TransformComponent* component, size_t index, v
     glm_vec3_copy(scale, component->scales[index]);
     TransformComponentCalculateMatrixAt(component, index);
 }
+
+void TransformComponentDestroy(TransformComponent* component) {
+    if (!component) return;
+    
+    if (component->modelMatrices) {
+        free(component->modelMatrices);
+        component->modelMatrices = NULL;
+    }
+    
+    if (component->worldMatrices) {
+        free(component->worldMatrices);
+        component->worldMatrices = NULL;
+    }
+    
+    if (component->positions) {
+        free(component->positions);
+        component->positions = NULL;
+    }
+    
+    if (component->rotations) {
+        free(component->rotations);
+        component->rotations = NULL;
+    }
+    
+    if (component->scales) {
+        free(component->scales);
+        component->scales = NULL;
+    }
+}

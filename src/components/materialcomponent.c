@@ -1,4 +1,4 @@
-#include "components/materialComponent.h"
+#include "components/materialcomponent.h"
 #include <stdlib.h>
 
 MaterialComponent* MaterialComponentCreate(Material* material) {
@@ -10,4 +10,7 @@ MaterialComponent* MaterialComponentCreate(Material* material) {
 void MaterialComponentSetMaterial(MaterialComponent* component, Material* material) {
     if (!component) return;
     component->material = material;
+}
+
+void MaterialComponentDestroy(MaterialComponent* component) {
 }

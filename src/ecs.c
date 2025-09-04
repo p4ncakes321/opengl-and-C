@@ -1,6 +1,7 @@
 #include "ecs.h"
 #include <stdint.h>
 #include <cglm/cglm.h>
+#include <stdlib.h>
 
 int EntityList_ensure_capacity(ECS* ecs, size_t idx) {
     if (idx < ecs->entity_capacity) return 0;
@@ -65,7 +66,7 @@ ECS* ECS_Create(void) {
     ecs->entities = NULL;
     ecs->entity_count = 0;
     ecs->entity_capacity = 0;
-#define X(T) ecs->T##_storage = T##Storage_create();
+#define X(T) ecs->T##_storage = T##Storage_create((void(*)(void*))T##Destroy);
     ECS_COMPONENTS
 #undef X
     ecs->parents = NULL;
@@ -233,4 +234,77 @@ mat4* ECS_GetWorldTransform(ECS* ecs, Entity e) {
     return tc->worldMatrices;
 }
 
+#define X(T) \
+EntityVector* ECS_GetEntitiesWith##T(ECS* ecs) { \
+    if (!ecs) return NULL; \
+    EntityVector* list = EntityVector_create(); \
+    if (!list) return NULL; \
+    for (size_t i = 0; i < ecs->entity_count; ++i) { \
+        Entity e = ecs->entities[i]; \
+        if (ECS_Get##T(ecs, e)) { \
+            EntityVector_push(list, e); \
+        } \
+    } \
+    return list; \
+}
+ECS_COMPONENTS
+#undef X
 
+static float clampf_local(float v, float lo, float hi) {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+void ECS_UpdateCameras(ECS* ecs) {
+    if (!ecs) return;
+
+    EntityVector* cams = ECS_GetEntitiesWithCameraComponent(ecs);
+    if (!cams) return;
+
+    for (size_t i = 0; i < cams->count; ++i) {
+        Entity e = cams->data[i];
+        CameraComponent* cc = ECS_GetCameraComponent(ecs, e);
+        if (!cc || !cc->active || !cc->camera) continue;
+
+        mat4* worldArr = ECS_GetWorldTransform(ecs, e);
+        if (!worldArr) continue;
+
+        size_t idx = cc->instanceIndex;
+        TransformComponent* tc = ECS_GetTransformComponent(ecs, e);
+        mat4 worldMat;
+        if (tc && idx < tc->instanceCount) {
+            glm_mat4_copy(tc->worldMatrices[idx], worldMat);
+        } else {
+            glm_mat4_copy(worldArr[0], worldMat);
+        }
+
+        vec3 pos = { worldMat[3][0], worldMat[3][1], worldMat[3][2] };
+        glm_vec3_copy(pos, cc->camera->position);
+        vec4 localF = { 0.0f, 0.0f, -1.0f, 0.0f };
+        vec4 localU = { 0.0f, 1.0f, 0.0f, 0.0f };
+        vec4 worldF4, worldU4;
+        glm_mat4_mulv(worldMat, localF, worldF4);
+        glm_mat4_mulv(worldMat, localU, worldU4);
+
+        vec3 forward = { worldF4[0], worldF4[1], worldF4[2] };
+        vec3 up      = { worldU4[0], worldU4[1], worldU4[2] };
+
+        glm_vec3_normalize(forward);
+        glm_vec3_normalize(up);
+
+        glm_vec3_copy(forward, cc->camera->forward);
+        glm_vec3_copy(up, cc->camera->up);
+
+        glm_vec3_cross(cc->camera->forward, cc->camera->up, cc->camera->right);
+        glm_vec3_normalize(cc->camera->right);
+
+        glm_vec3_copy(cc->camera->up, cc->camera->worldUp);
+
+        float fy = clampf_local(cc->camera->forward[1], -1.0f, 1.0f);
+        cc->camera->pitch = glm_deg(asinf(fy));
+        cc->camera->yaw   = glm_deg(atan2f(cc->camera->forward[0], cc->camera->forward[2]));
+    }
+
+    EntityVector_free(cams);
+}

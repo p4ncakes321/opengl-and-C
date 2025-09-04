@@ -28,10 +28,6 @@ static inline void name##_free(name* arr) {                               \
                                                                           \
 static inline void name##_clear(name* arr) {                              \
     arr->count = 0;                                                       \
-    if (arr->capacity > 64) {                                             \
-        type* tmp = realloc(arr->data, 64 * sizeof(type));                \
-        if (tmp) { arr->data = tmp; arr->capacity = 64; }                 \
-    }                                                                     \
 }                                                                         \
                                                                           \
 static inline int name##_push(name* arr, type value) {                     \

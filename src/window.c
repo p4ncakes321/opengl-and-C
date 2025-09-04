@@ -2,6 +2,7 @@
 #include "engine.h"
 #include "glad/glad.h" 
 #include "renderer.h"
+#include "renderpass.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -142,4 +143,8 @@ void WindowAttachCameraView(Window* window, CameraView* camera) {
 
 void WindowRenderFrame(Window* window) {
     RendererRenderFrame(&window->renderer, window->cameraViews);
+}
+
+void WindowAddRenderPass(Window* window, RenderPass* pass) {
+    RendererAddPass(&window->renderer, pass);
 }

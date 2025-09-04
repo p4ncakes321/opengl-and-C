@@ -27,6 +27,7 @@ void TransformComponentSetRotationAt(TransformComponent* component, size_t index
 void TransformComponentSetScaleAt(TransformComponent* component, size_t index, vec3 scale);
 
 void TransformComponentGetAverageMatrix(TransformComponent* component, mat4 out);
+void TransformComponentDestroy(TransformComponent* component);
 
 #endif
 

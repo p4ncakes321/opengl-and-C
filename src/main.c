@@ -1,9 +1,11 @@
 #include <cglm/cglm.h>
+#include <cglm/types.h>
+#include <cglm/util.h>
 #include <stdio.h>
 #include "camera.h"
 #include "cameras/perspectivecamera.h"
 #include "cameraviews/fullscreen.h"
-#include "components/materialComponent.h"
+#include "components/materialcomponent.h"
 #include "components/meshcomponent.h"
 #include "components/transformcomponent.h"
 #include "eventmanager.h"
@@ -12,11 +14,12 @@
 #include "renderPasses/outputpass.h"
 #include "window.h"
 #include "engine.h"
-#include "renderer.h"
 #include "renderPasses/geometrypass.h"
 #include "materials/defaultmaterial.h"
 #include "meshes/staticmesh.h"
 #include "ecs.h"
+
+// TODO: RESOURCE MANAGER
 
 static int screen_width = 800;
 static int screen_height = 600;
@@ -49,11 +52,14 @@ int main() {
 
     GeometryPass* geometryPass = GeometryPassCreate();
     OutputPass* outputPass = OutputPassCreate(&geometryPass->gbuffer);
-    RendererAddPass(&window->renderer, (RenderPass*)geometryPass);
-    RendererAddPass(&window->renderer, (RenderPass*)outputPass);
-    RendererResize(&window->renderer, screen_width, screen_height);
+    
+    WindowAddRenderPass(window, (RenderPass*)geometryPass);
+    WindowAddRenderPass(window, (RenderPass*)outputPass);
 
     WindowDepthTesting(window, true);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK); 
+    glFrontFace(GL_CCW);
     WindowVsync(window, false);
 
     FullScreenCameraView* view = FullScreenCameraViewCreate((Camera*)camera);
@@ -122,15 +128,19 @@ int main() {
 
     Entity childCube = ECS_CreateEntity(ecs);
     TransformComponent* childTransform = TransformComponentCreate(
-        (vec3){1.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){0.5f,0.5f,0.5f}
+        (vec3){2.0f,0.0f,0.0f},
+        (vec3){0.0f,glm_rad(90.0f),0.0f},
+        (vec3){0.5f,0.5f,0.5f}
     );
+
     MeshComponent* childMesh = MeshComponentCreate((Mesh*)cubeMesh, 1);
     MaterialComponent* childMat = MaterialComponentCreate((Material*)cubeMaterial);
+    CameraComponent* childCameraComp = CameraComponentCreate((Camera*)camera, 0);
 
+    ECS_AddCameraComponent(ecs, childCube, childCameraComp);
     ECS_AddTransformComponent(ecs, childCube, childTransform);
     ECS_AddMeshComponent(ecs, childCube, childMesh);
     ECS_AddMaterialComponent(ecs, childCube, childMat);
-
     ECS_SetParent(ecs, childCube, parentCube);
 
     double startTime = EngineGetTime();
@@ -161,6 +171,8 @@ int main() {
             );
             GeometryPassAddObject(geometryPass, obj);
         }
+
+        ECS_UpdateCameras(ecs);
 
         WindowClear(window);
         WindowRenderFrame(window);

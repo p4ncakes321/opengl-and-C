@@ -4,6 +4,7 @@
 #include "renderer.h"
 #include "eventmanager.h"
 #include "glad/glad.h"
+#include "renderpass.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 
@@ -55,5 +56,6 @@ void WindowVsync(Window* window, bool toggle);
 void WindowDepthTesting(Window* window, bool toggle);
 void WindowAttachCameraView(Window* window, CameraView* camera);
 void WindowRenderFrame(Window* window);
+void WindowAddRenderPass(Window* window, RenderPass* pass);
 
 #endif
