@@ -18,8 +18,7 @@
 #include "materials/defaultmaterial.h"
 #include "meshes/staticmesh.h"
 #include "ecs.h"
-
-// TODO: RESOURCE MANAGER
+#include "resourcemanager.h"
 
 static int screen_width = 800;
 static int screen_height = 600;
@@ -45,7 +44,9 @@ int main() {
     EngineInit();
 
     Window* window = WindowCreate(screen_width, screen_height, "Rotating Cube", NULL);
-    PerspectiveCamera* camera = PerspectiveCameraCreate((vec3){0.0f,0.0f,3.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height);
+    PerspectiveCamera* camera = PerspectiveCameraCreate(
+        (vec3){0.0f,0.0f,5.0f}, 45.0f, 1000.0f, 0.1f, (float)screen_width/screen_height
+    );
 
     void* resizeHandle = EventManagerSubscribe(window->sizeChanged, resize_listener, window);
     void* keyHandle    = EventManagerSubscribe(window->keyEvents, key_listener, window);
@@ -65,36 +66,38 @@ int main() {
     FullScreenCameraView* view = FullScreenCameraViewCreate((Camera*)camera);
     WindowAttachCameraView(window, (CameraView*)view);
 
+    ResourceManager* rm = ResourceManagerCreate();
+
     Vertex vertices[] = {
-        // Front face (z = 0.5)
+        // Front face (z = +0.5)
         {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{0,0,1},{0,0},{0,0}},
         {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{0,0,1},{1,0},{1,0}},
         {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{0,0,1},{1,1},{1,1}},
         {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{0,0,1},{0,1},{0,1}},
 
         // Back face (z = -0.5)
-        {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{0,0,-1},{1,0},{1,0}},
-        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{0,0,-1},{1,1},{1,1}},
-        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{0,0,-1},{0,1},{0,1}},
-        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{0,0,-1},{0,0},{0,0}},
+        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{0,0,-1},{1,0},{1,0}},
+        {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{0,0,-1},{0,0},{0,0}},
+        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{0,0,-1},{0,1},{0,1}},
+        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{0,0,-1},{1,1},{1,1}},
 
         // Left face (x = -0.5)
-        {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{-1,0,0},{0,0},{0,0}},
-        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{-1,0,0},{0,1},{0,1}},
-        {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{-1,0,0},{1,1},{1,1}},
-        {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{-1,0,0},{1,0},{1,0}},
+        {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{-1,0,0},{1,0},{1,0}},
+        {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{-1,0,0},{0,0},{0,0}},
+        {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{-1,0,0},{0,1},{0,1}},
+        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{-1,0,0},{1,1},{1,1}},
 
-        // Right face (x = 0.5)
-        {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{1,0,0},{0,0},{0,0}},
-        {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{1,0,0},{0,1},{0,1}},
-        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{1,0,0},{1,1},{1,1}},
-        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{1,0,0},{1,0},{1,0}},
+        // Right face (x = +0.5)
+        {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{1,0,0},{1,0},{1,0}},
+        {{ 0.5f,-0.5f,-0.5f},{0.5,0.5,0.5,1},{1,0,0},{0,0},{0,0}},
+        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{1,0,0},{0,1},{0,1}},
+        {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{1,0,0},{1,1},{1,1}},
 
-        // Top face (y = 0.5)
-        {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{0,1,0},{0,0},{0,0}},
-        {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{0,1,0},{1,0},{1,0}},
-        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{0,1,0},{1,1},{1,1}},
-        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{0,1,0},{0,1},{0,1}},
+        // Top face (y = +0.5)
+        {{-0.5f, 0.5f, 0.5f},{1,1,0,1},{0,1,0},{0,1},{0,1}},
+        {{ 0.5f, 0.5f, 0.5f},{0,0,1,1},{0,1,0},{1,1},{1,1}},
+        {{ 0.5f, 0.5f,-0.5f},{1,1,1,1},{0,1,0},{1,0},{1,0}},
+        {{-0.5f, 0.5f,-0.5f},{0,1,1,1},{0,1,0},{0,0},{0,0}},
 
         // Bottom face (y = -0.5)
         {{-0.5f,-0.5f,-0.5f},{1,0,1,1},{0,-1,0},{0,0},{0,0}},
@@ -102,25 +105,41 @@ int main() {
         {{ 0.5f,-0.5f, 0.5f},{0,1,0,1},{0,-1,0},{1,1},{1,1}},
         {{-0.5f,-0.5f, 0.5f},{1,0,0,1},{0,-1,0},{0,1},{0,1}}
     };
+
     GLuint indices[] = {
-        0,1,2, 0,2,3,       // front
-        4,5,6, 4,6,7,       // back
-        8,9,10, 8,10,11,    // left
-        12,13,14, 12,14,15, // right
-        16,17,18, 16,18,19, // top
-        20,21,22, 20,22,23  // bottom
+        0, 1, 2, 0, 2, 3,
+        4, 5, 6, 4, 6, 7,
+        8, 9, 10, 8, 10, 11,
+        12, 13, 14, 12, 14, 15,
+        16, 17, 18, 16, 18, 19,
+        20, 21, 22, 20, 22, 23
     };
 
     StaticMesh* cubeMesh = StaticMeshCreate(vertices, 24, indices, 36);
+    ResourceManager_RegisterMesh(rm, "CubeMesh", (Mesh*)cubeMesh);
+
     DefaultMaterial* cubeMaterial = DefaultMaterialCreate("assets/crate.jpg");
+    ResourceManager_RegisterMaterial(rm, "CubeMaterial", (Material*)cubeMaterial);
 
     ECS* ecs = ECS_Create();
     Entity parentCube = ECS_CreateEntity(ecs);
-    TransformComponent* parentTransform = TransformComponentCreate(
-        (vec3){0.0f,0.0f,0.0f}, (vec3){0.0f,0.0f,0.0f}, (vec3){1.0f,1.0f,1.0f}
-    );
-    MeshComponent* parentMesh = MeshComponentCreate((Mesh*)cubeMesh, 1);
-    MaterialComponent* parentMat = MaterialComponentCreate((Material*)cubeMaterial);
+
+    vec3 positions[] = {
+        {-1.0f, 0.0f, 0.0f},
+        { 1.0f, 0.0f, 0.0f}
+    };
+    vec3 rotations[] = {
+        {0.0f,0.0f,0.0f},
+        {0.0f,0.0f,0.0f}
+    };
+    vec3 scales[] = {
+        {1.0f,1.0f,1.0f},
+        {1.0f,1.0f,1.0f}
+    };
+
+    TransformComponent* parentTransform = TransformComponentCreateMultiple(2, positions, rotations, scales);
+    MeshComponent* parentMesh = MeshComponentCreate(ResourceManager_GetMesh(rm, "CubeMesh"), 2);
+    MaterialComponent* parentMat = MaterialComponentCreate(ResourceManager_GetMaterial(rm, "CubeMaterial"));
 
     ECS_AddTransformComponent(ecs, parentCube, parentTransform);
     ECS_AddMeshComponent(ecs, parentCube, parentMesh);
@@ -128,13 +147,14 @@ int main() {
 
     Entity childCube = ECS_CreateEntity(ecs);
     TransformComponent* childTransform = TransformComponentCreate(
-        (vec3){2.0f,0.0f,0.0f},
+        (vec3){5.0f,0.0f,0.0f},
         (vec3){0.0f,glm_rad(90.0f),0.0f},
         (vec3){0.5f,0.5f,0.5f}
     );
+    TransformComponentSetInheritIndex(childTransform, 0);
 
-    MeshComponent* childMesh = MeshComponentCreate((Mesh*)cubeMesh, 1);
-    MaterialComponent* childMat = MaterialComponentCreate((Material*)cubeMaterial);
+    MeshComponent* childMesh = MeshComponentCreate(ResourceManager_GetMesh(rm, "CubeMesh"), 1);
+    MaterialComponent* childMat = MaterialComponentCreate(ResourceManager_GetMaterial(rm, "CubeMaterial"));
     CameraComponent* childCameraComp = CameraComponentCreate((Camera*)camera, 0);
 
     ECS_AddCameraComponent(ecs, childCube, childCameraComp);
@@ -162,7 +182,6 @@ int main() {
         Entity entities[] = { parentCube, childCube };
         for (int i = 0; i < 2; ++i) {
             Entity e = entities[i];
-            TransformComponent* t = ECS_GetTransformComponent(ecs, e);
             RenderObject obj = RenderObjectCreate(
                 ECS_GetMeshComponent(ecs, e)->mesh,
                 ECS_GetMaterialComponent(ecs, e)->material,
@@ -188,6 +207,7 @@ int main() {
     }
 
     ECS_Destroy(ecs);
+    ResourceManagerFree(rm);
     WindowDestroy(window);
     EngineTerminate();
     return 0;

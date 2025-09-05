@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <cglm/cglm.h>
 #include <stdlib.h>
+// another overengineered mess (but it works!?)
 
 int EntityList_ensure_capacity(ECS* ecs, size_t idx) {
     if (idx < ecs->entity_capacity) return 0;
@@ -213,9 +214,23 @@ mat4* ECS_GetWorldTransform(ECS* ecs, Entity e) {
 
     mat4 parentMat;
     Entity parent = ECS_GetParent(ecs, e);
+    
     if (parent != INVALID_ENTITY) {
-        mat4* pWorld = ECS_GetWorldTransform(ecs, parent);
-        glm_mat4_copy(*pWorld, parentMat);
+        TransformComponent* ptc = ECS_GetTransformComponent(ecs, parent);
+        if (ptc && ptc->instanceCount > 0) {
+            mat4* pWorldArr = ECS_GetWorldTransform(ecs, parent);
+            if (pWorldArr) {
+                size_t parentIdx = tc->inheritIndex;
+                if (parentIdx >= ptc->instanceCount) parentIdx = 0;
+                glm_mat4_copy(pWorldArr[parentIdx], parentMat);
+            } else {
+                glm_mat4_identity(parentMat);
+            }
+        } else {
+            mat4* pWorld = ECS_GetWorldTransform(ecs, parent);
+            if (pWorld) glm_mat4_copy(*pWorld, parentMat);
+            else glm_mat4_identity(parentMat);
+        }
     } else {
         glm_mat4_identity(parentMat);
     }
@@ -227,7 +242,6 @@ mat4* ECS_GetWorldTransform(ECS* ecs, Entity e) {
         glm_euler_xyz(tc->rotations[i], rot);
         glm_mat4_mul(local, rot, local);
         glm_scale(local, tc->scales[i]);
-
         glm_mat4_mul(parentMat, local, tc->worldMatrices[i]);
     }
 
